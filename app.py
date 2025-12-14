@@ -1,14 +1,29 @@
 import threading
 from datetime import datetime, date, timedelta
 from flask import Flask, render_template, redirect, url_for
-from models import db, Task, Project, Category, User, Cycle
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
+from models import db, Task, Project, Category, User, Cycle, TaskDependency, XPHistory
 from sqlalchemy import func
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///project_manager.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'dev-key-for-sessions'  # Required for Flask-Admin
 
 db.init_app(app)
+
+# --- FLASK ADMIN SETUP ---
+# Access this at http://localhost:5000/admin
+admin = Admin(app, name='Project Manager', template_mode='bootstrap3')
+
+admin.add_view(ModelView(Task, db.session))
+admin.add_view(ModelView(Project, db.session))
+admin.add_view(ModelView(Category, db.session))
+admin.add_view(ModelView(User, db.session))
+admin.add_view(ModelView(Cycle, db.session))
+admin.add_view(ModelView(TaskDependency, db.session))
+admin.add_view(ModelView(XPHistory, db.session))
 
 # --- CONFIGURATION & HARDCODED LOGIC ---
 
