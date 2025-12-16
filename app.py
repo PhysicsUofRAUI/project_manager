@@ -5,6 +5,7 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from models import db, Task, Project, Category, User, Cycle, TaskDependency, XPHistory
 from sqlalchemy import func
+from flask_babel import Babel
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///project_manager.db'
@@ -13,9 +14,11 @@ app.config['SECRET_KEY'] = 'dev-key-for-sessions'  # Required for Flask-Admin
 
 db.init_app(app)
 
+babel = Babel(app)
+
 # --- FLASK ADMIN SETUP ---
 # Access this at http://localhost:5000/admin
-admin = Admin(app, name='Project Manager', template_mode='bootstrap3')
+admin = Admin(app)
 
 admin.add_view(ModelView(Task, db.session))
 admin.add_view(ModelView(Project, db.session))
@@ -184,7 +187,8 @@ def index():
     return render_template('index.html', 
                            user=user, 
                            level_title=title, 
-                           tasks=top_tasks)
+                           tasks=top_tasks,
+                           now=date.today())
 
 # --- STARTUP ---
 
