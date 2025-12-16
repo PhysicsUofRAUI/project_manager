@@ -158,7 +158,7 @@
                     <div class="card-body">
                         <p class="small text-muted">Too overwhelmed for a big task? Pick a quick win.</p>
                         <div class="d-grid gap-2">
-                            <a href="timer/mad_dash" class="btn btn-outline-light btn-sm text-start">
+                            <a href="{{ url_for('timer', name='Mad Dash', minutes=10, xp=25) }}" class="btn btn-outline-light btn-sm text-start">
                                 <i class="fas fa-broom me-2"></i> 10m Mad Dash (+25 XP)
                             </a>
                             <a href="timer/journaling" class="btn btn-outline-light btn-sm text-start">

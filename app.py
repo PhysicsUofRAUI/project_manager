@@ -1,6 +1,6 @@
 import threading
 from datetime import datetime, date, timedelta
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, request
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from models import db, Task, Project, Category, User, Cycle, TaskDependency, XPHistory
@@ -189,6 +189,53 @@ def index():
                            level_title=title, 
                            tasks=top_tasks,
                            now=date.today())
+
+@app.route('/timer', methods=['GET', 'POST'])
+def timer():
+    task = None
+    duration = 30  # Default duration for standard tasks
+    
+    # Case 1: Quick XP (GET request via links)
+    # Expects: /timer?name=Mad+Dash&xp=25&minutes=10
+    if request.method == 'GET' and request.args.get('name'):
+        name = request.args.get('name')
+        xp = int(request.args.get('xp', 0))
+        duration = int(request.args.get('minutes', 10))
+        
+        # Create a new task immediately for this Quick XP event
+        task = Task(
+            name=name,
+            description="Quick XP Event",
+            xp_award=xp,
+            deadline=date.today(),
+            estimated_cycles=1,
+            project_id=None 
+        )
+        db.session.add(task)
+        db.session.commit()
+
+    # Case 2: Standard Task (POST request from Index form)
+    elif request.method == 'POST':
+        task_id = request.form.get('selected_task')
+        if task_id:
+            task = Task.query.get(task_id)
+            # Standard duration remains 30
+            
+    # Safety fallback
+    if not task:
+        return redirect(url_for('index'))
+
+    # Create the Cycle Record immediately (as per spec)
+    # We assume "Deep Cycle" if duration is >= 30 mins
+    new_cycle = Cycle(
+        task_id=task.id,
+        datetime=datetime.now(),
+        deep_cycle=(duration >= 30)
+    )
+    db.session.add(new_cycle)
+    db.session.commit()
+
+    return render_template('timer.html', task=task, duration=duration, cycle_id=new_cycle.id)
 
 # --- STARTUP ---
 

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Timer - {{ task.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #000000;
+            color: #e0e0e0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .timer-container {
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        .task-name {
+            color: #fff;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+        .timer-display {
+            font-size: 8rem;
+            font-weight: 700;
+            font-family: 'Courier New', Courier, monospace;
+            color: #0d6efd;
+            line-height: 1;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 30px rgba(13, 110, 253, 0.4);
+        }
+        .timer-display.finished {
+            color: #198754; /* Green when done */
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { text-shadow: 0 0 20px rgba(25, 135, 84, 0.4); }
+            50% { text-shadow: 0 0 50px rgba(25, 135, 84, 0.8); }
+            100% { text-shadow: 0 0 20px rgba(25, 135, 84, 0.4); }
+        }
+        .controls {
+            display: none; /* Hidden until timer ends */
+            animation: fadeIn 1s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress {
+            height: 4px;
+            background-color: #333;
+            margin-bottom: 2rem;
+        }
+        .progress-bar {
+            background-color: #0d6efd;
+            transition: width 1s linear;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="timer-container">
+        <h2 class="task-name">
+            <i class="fas fa-bullseye me-2 text-muted"></i>
+            {{ task.name }}
+        </h2>
+        
+        <div class="progress">
+            <div id="progressBar" class="progress-bar" role="progressbar" style="width: 100%"></div>
+        </div>
+
+        <div id="timer" class="timer-display">
+            {{ "{:02d}".format(duration) }}:00
+        </div>
+
+        <div id="statusMessage" class="h4 text-muted mb-4">Focus...</div>
+
+        <!-- Controls that appear when finished -->
+        <div id="endControls" class="controls">
+            <h3 class="mb-4 text-white">Cycle Complete!</h3>
+            <div class="d-grid gap-3 col-8 mx-auto">
+                <a href="/" class="btn btn-outline-light">
+                    <i class="fas fa-home me-2"></i> Return to Command Deck
+                </a>
+                <!-- Future features: 'Mark Complete' or 'Take Break' buttons can go here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Duration passed from Flask (in minutes)
+        const durationMinutes = {{ duration }};
+        let totalSeconds = durationMinutes * 60;
+        let remainingSeconds = totalSeconds;
+        
+        const timerDisplay = document.getElementById('timer');
+        const progressBar = document.getElementById('progressBar');
+        const endControls = document.getElementById('endControls');
+        const statusMessage = document.getElementById('statusMessage');
+        
+        // Audio Context for Beep
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        }
+
+        const interval = setInterval(() => {
+            remainingSeconds--;
+
+            // Update Display
+            const m = Math.floor(remainingSeconds / 60);
+            const s = remainingSeconds % 60;
+            timerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+            // Update Progress Bar
+            const percentage = (remainingSeconds / totalSeconds) * 100;
+            progressBar.style.width = `${percentage}%`;
+
+            // Check Finish
+            if (remainingSeconds <= 0) {
+                clearInterval(interval);
+                finishCycle();
+            }
+        }, 1000);
+
+        function finishCycle() {
+            timerDisplay.classList.add('finished');
+            timerDisplay.textContent = "00:00";
+            statusMessage.style.display = 'none';
+            endControls.style.display = 'block';
+            playBeep();
+            
+            // Play a few more beeps
+            setTimeout(playBeep, 600);
+            setTimeout(playBeep, 1200);
+        }
+    </script>
+</body>
+</html>
