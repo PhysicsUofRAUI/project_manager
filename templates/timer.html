@@ -87,10 +87,10 @@
         <div id="endControls" class="controls">
             <h3 class="mb-4 text-white">Cycle Complete!</h3>
             <div class="d-grid gap-3 col-8 mx-auto">
-                <a href="/" class="btn btn-outline-light">
-                    <i class="fas fa-home me-2"></i> Return to Command Deck
+                <a href="{{ url_for('cycle_complete', cycle_id=cycle_id) }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-check-circle me-2"></i> Finish & Claim XP
                 </a>
-                <!-- Future features: 'Mark Complete' or 'Take Break' buttons can go here -->
+                <!-- Future features can go here -->
             </div>
         </div>
     </div>

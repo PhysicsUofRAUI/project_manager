@@ -161,10 +161,10 @@
                             <a href="{{ url_for('timer', name='Mad Dash', minutes=10, xp=25) }}" class="btn btn-outline-light btn-sm text-start">
                                 <i class="fas fa-broom me-2"></i> 10m Mad Dash (+25 XP)
                             </a>
-                            <a href="timer/journaling" class="btn btn-outline-light btn-sm text-start">
+                            <a href="{{ url_for('timer', name='journaling', minutes=10, xp=10) }}" class="btn btn-outline-light btn-sm text-start">
                                 <i class="fas fa-pen-nib me-2"></i> Journaling (+10 XP)
                             </a>
-                            <a href="timer/inbox" class="btn btn-outline-light btn-sm text-start">
+                            <a href="{{ url_for('timer', name='Inbox Triage', minutes=10, xp=15) }}" class="btn btn-outline-light btn-sm text-start">
                                 <i class="fas fa-inbox me-2"></i> Inbox Triage (+15 XP)
                             </a>
                         </div>

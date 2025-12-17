@@ -237,6 +237,25 @@ def timer():
 
     return render_template('timer.html', task=task, duration=duration, cycle_id=new_cycle.id)
 
+@app.route('/cycle_complete/<int:cycle_id>')
+def cycle_complete(cycle_id):
+    cycle = Cycle.query.get_or_404(cycle_id)
+    task = cycle.task
+    user = User.query.first()
+    
+    # Always increment cycles used for the task
+    task.cycles_used += 1
+    
+    # Logic for "Quick XP" Tasks
+    if task.description == "Quick XP Event" and not task.date_time_complete:
+        user.xp += task.xp_award
+        task.date_time_complete = datetime.utcnow()
+        
+    db.session.commit()
+    
+    # For normal tasks, we just redirect for now (as per instructions)
+    return redirect(url_for('index'))
+
 # --- STARTUP ---
 
 def init_db():
