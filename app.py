@@ -244,16 +244,35 @@ def cycle_complete(cycle_id):
     user = User.query.first()
     
     # Always increment cycles used for the task
+    # Note: If user reloads this page, it might double count. 
+    # In a prod app, we'd check cycle status.
     task.cycles_used += 1
-    
-    # Logic for "Quick XP" Tasks
-    if task.description == "Quick XP Event" and not task.date_time_complete:
-        user.xp += task.xp_award
-        task.date_time_complete = datetime.utcnow()
-        
     db.session.commit()
     
-    # For normal tasks, we just redirect for now (as per instructions)
+    # LOGIC 1: Quick XP Tasks (Auto-finish)
+    if task.description == "Quick XP Event":
+        if not task.date_time_complete:
+            user.xp += task.xp_award
+            task.date_time_complete = datetime.utcnow()
+            db.session.commit()
+        return redirect(url_for('index'))
+    
+    # LOGIC 2: Normal Tasks (Show Options)
+    return render_template('cycle_complete.html', task=task, cycle=cycle)
+
+@app.route('/task_finish/<int:task_id>')
+def task_finish(task_id):
+    """
+    Called when user manually selects 'Task Complete' after a cycle.
+    """
+    task = Task.query.get_or_404(task_id)
+    user = User.query.first()
+    
+    if not task.date_time_complete:
+        user.xp += task.xp_award
+        task.date_time_complete = datetime.utcnow()
+        db.session.commit()
+        
     return redirect(url_for('index'))
 
 # --- STARTUP ---

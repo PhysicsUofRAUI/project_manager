@@ -106,11 +106,16 @@
                     <span class="text-muted small">Sorted by Deadline & XP Reward</span>
                 </div>
 
-                <form action="#" method="POST"> <!-- Logic to be added later -->
+                <!-- FORM START: Wraps the task list and the start button -->
+                <!-- Action points to the timer route, Method POST sends the selection -->
+                <form action="{{ url_for('timer') }}" method="POST">
                     <div class="list-group mb-4">
                         {% if tasks %}
                             {% for task in tasks %}
+                            <!-- Radio Input: Stores the ID -->
                             <input type="radio" class="btn-check" name="selected_task" id="task_{{ task.id }}" value="{{ task.id }}" {% if loop.first %}checked{% endif %} autocomplete="off">
+                            
+                            <!-- Label: The visible clickable card -->
                             <label class="list-group-item task-option p-3 mb-2 rounded" for="task_{{ task.id }}">
                                 <div class="d-flex w-100 justify-content-between align-items-center">
                                     <div>
@@ -140,11 +145,12 @@
                         {% endif %}
                     </div>
 
-                    <!-- THE BIG START BUTTON -->
-                    <button type="submit" class="btn btn-primary btn-start mb-5">
+                    <!-- THE BIG START BUTTON: Submits the form above -->
+                    <button type="submit" class="btn btn-primary btn-start mb-5" {% if not tasks %}disabled{% endif %}>
                         <i class="fas fa-play me-2"></i> Start Focus Cycle
                     </button>
                 </form>
+                <!-- FORM END -->
             </div>
 
             <!-- RIGHT COLUMN: Quick Actions & Sidebar -->
