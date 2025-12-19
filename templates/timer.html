@@ -21,6 +21,7 @@
             text-align: center;
             width: 100%;
             max-width: 600px;
+            position: relative;
         }
         .task-name {
             color: #fff;
@@ -63,9 +64,35 @@
             background-color: #0d6efd;
             transition: width 1s linear;
         }
+        
+        /* Overlay for Start Button */
+        #startOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
     </style>
 </head>
 <body>
+
+    <!-- Start Overlay to Capture User Interaction for Audio -->
+    <div id="startOverlay">
+        <div class="text-center">
+            <h1 class="mb-4 text-white">Ready?</h1>
+            <button id="startBtn" class="btn btn-primary btn-lg px-5 py-3 fs-3 rounded-pill shadow">
+                <i class="fas fa-play me-2"></i> Start Focus Cycle
+            </button>
+            <p class="mt-3 text-muted">Click to begin and enable audio</p>
+        </div>
+    </div>
 
     <div class="timer-container">
         <h2 class="task-name">
@@ -90,7 +117,6 @@
                 <a href="{{ url_for('cycle_complete', cycle_id=cycle_id) }}" class="btn btn-success btn-lg">
                     <i class="fas fa-check-circle me-2"></i> Finish & Claim XP
                 </a>
-                <!-- Future features can go here -->
             </div>
         </div>
     </div>
@@ -100,19 +126,36 @@
         const durationMinutes = {{ duration }};
         let totalSeconds = durationMinutes * 60;
         let remainingSeconds = totalSeconds;
+        let audioCtx;
         
         const timerDisplay = document.getElementById('timer');
         const progressBar = document.getElementById('progressBar');
         const endControls = document.getElementById('endControls');
         const statusMessage = document.getElementById('statusMessage');
-        
-        // Audio Context for Beep
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const startOverlay = document.getElementById('startOverlay');
+        const startBtn = document.getElementById('startBtn');
 
-        function playBeep() {
+        // Initialize logic when Start is clicked
+        startBtn.addEventListener('click', () => {
+            // 1. Initialize Audio Context on user gesture
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+
+            // 2. Hide Overlay
+            startOverlay.style.opacity = '0';
+            setTimeout(() => {
+                startOverlay.style.display = 'none';
+            }, 500);
+
+            // 3. Start Timer
+            startTimer();
+        });
+
+        function playBeep() {
+            if (!audioCtx) return;
+
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
@@ -130,33 +173,35 @@
             oscillator.stop(audioCtx.currentTime + 0.5);
         }
 
-        const interval = setInterval(() => {
-            remainingSeconds--;
+        function startTimer() {
+            const interval = setInterval(() => {
+                remainingSeconds--;
 
-            // Update Display
-            const m = Math.floor(remainingSeconds / 60);
-            const s = remainingSeconds % 60;
-            timerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                // Update Display
+                const m = Math.floor(remainingSeconds / 60);
+                const s = remainingSeconds % 60;
+                timerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
-            // Update Progress Bar
-            const percentage = (remainingSeconds / totalSeconds) * 100;
-            progressBar.style.width = `${percentage}%`;
+                // Update Progress Bar
+                const percentage = (remainingSeconds / totalSeconds) * 100;
+                progressBar.style.width = `${percentage}%`;
 
-            // Check Finish
-            if (remainingSeconds <= 0) {
-                clearInterval(interval);
-                finishCycle();
-            }
-        }, 1000);
+                // Check Finish
+                if (remainingSeconds <= 0) {
+                    clearInterval(interval);
+                    finishCycle();
+                }
+            }, 1000);
+        }
 
         function finishCycle() {
             timerDisplay.classList.add('finished');
             timerDisplay.textContent = "00:00";
             statusMessage.style.display = 'none';
             endControls.style.display = 'block';
-            playBeep();
             
-            // Play a few more beeps
+            // Play a sequence of beeps
+            playBeep();
             setTimeout(playBeep, 600);
             setTimeout(playBeep, 1200);
         }

@@ -244,8 +244,6 @@ def cycle_complete(cycle_id):
     user = User.query.first()
     
     # Always increment cycles used for the task
-    # Note: If user reloads this page, it might double count. 
-    # In a prod app, we'd check cycle status.
     task.cycles_used += 1
     db.session.commit()
     
@@ -257,8 +255,25 @@ def cycle_complete(cycle_id):
             db.session.commit()
         return redirect(url_for('index'))
     
-    # LOGIC 2: Normal Tasks (Show Options)
-    return render_template('cycle_complete.html', task=task, cycle=cycle)
+    # LOGIC 2: Force Break Check
+    # We look at the last few cycles to see if user has been working too hard
+    # Fetch last 3 cycles, ordered by newest first
+    recent_cycles = Cycle.query.order_by(Cycle.datetime.desc()).limit(3).all()
+    
+    consecutive_deep = 0
+    for c in recent_cycles:
+        # We only count it as a "streak" if it was a deep cycle
+        if c.deep_cycle:
+            consecutive_deep += 1
+        else:
+            # If we hit a rest cycle or a quick task, the streak is broken
+            break
+            
+    # If we have 2 or more consecutive deep cycles, force a break
+    force_break = (consecutive_deep >= 2)
+
+    # LOGIC 3: Normal Tasks (Show Options)
+    return render_template('cycle_complete.html', task=task, cycle=cycle, force_break=force_break)
 
 @app.route('/task_finish/<int:task_id>')
 def task_finish(task_id):
