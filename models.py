@@ -19,6 +19,9 @@ class Category(db.Model):
     # Relationships
     projects = db.relationship('Project', backref='category', lazy=True)
 
+    def __str__(self):
+        return self.name
+
 class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
@@ -35,6 +38,9 @@ class Project(db.Model):
     # Relationships
     tasks = db.relationship('Task', backref='project', lazy=True)
     subprojects = db.relationship('Project', backref=db.backref('parent', remote_side=[id]), lazy=True)
+
+    def __str__(self):
+        return self.name
 
 class Task(db.Model):
     __tablename__ = 'tasks'
@@ -58,6 +64,9 @@ class Task(db.Model):
     @property
     def is_complete(self):
         return self.date_time_complete is not None
+    
+    def __str__(self):
+        return self.name
 
 class TaskDependency(db.Model):
     __tablename__ = 'task_dependency'
