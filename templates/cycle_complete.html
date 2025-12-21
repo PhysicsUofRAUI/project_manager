@@ -46,6 +46,15 @@
             color: #ffc107;
             font-weight: bold;
         }
+
+        /* Warning styles for Forced Break */
+        .card.overheat {
+            border: 2px solid #fd7e14; /* Orange */
+            box-shadow: 0 0 20px rgba(253, 126, 20, 0.3);
+        }
+        .text-overheat {
+            color: #fd7e14 !important;
+        }
     </style>
 </head>
 <body>
@@ -55,51 +64,89 @@
             <div class="col-md-6">
                 
                 <div class="text-center mb-4">
-                    <h1 class="display-4 text-success"><i class="fas fa-check-circle"></i></h1>
-                    <h2 class="h3">Cycle Complete</h2>
-                    <p class="text-muted">Great focus on <strong class="text-white">{{ task.name }}</strong>.</p>
+                    <h1 class="display-4 {% if force_break %}text-overheat{% else %}text-success{% endif %}">
+                        {% if force_break %}
+                            <i class="fas fa-temperature-high"></i>
+                        {% else %}
+                            <i class="fas fa-check-circle"></i>
+                        {% endif %}
+                    </h1>
+                    
+                    {% if force_break %}
+                        <h2 class="h3 text-overheat">System Overheat</h2>
+                        <p class="text-muted">Two consecutive deep cycles detected.<br>Mandatory cooling period initiated.</p>
+                    {% else %}
+                        <h2 class="h3">Cycle Complete</h2>
+                        <p class="text-muted">Great focus on <strong class="text-white">{{ task.name }}</strong>.</p>
+                    {% endif %}
                 </div>
 
-                <div class="card p-4">
-                    <h5 class="mb-3 text-muted text-uppercase small">What's Next?</h5>
+                <div class="card p-4 {% if force_break %}overheat{% endif %}">
+                    <h5 class="mb-3 text-muted text-uppercase small">Protocol Next Steps</h5>
 
                     <div class="d-grid gap-2">
                         
-                        <!-- Option 1: Rest -->
-                        <!-- Uses GET to timer with custom params for a rest timer -->
-                        <a href="{{ url_for('timer', name='Rest Cycle', minutes=5, xp=0) }}" class="btn btn-dark btn-option">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                <div>
-                                    <i class="fas fa-mug-hot text-info me-2"></i> Take a Breather
-                                </div>
-                                <span class="badge bg-secondary">5 min</span>
-                            </div>
-                        </a>
-
-                        <!-- Option 2: Deep Cycle (1 Hour) -->
-                        <!-- Uses POST to timer with the SAME task ID but duration=60 -->
-                        <form action="{{ url_for('timer') }}" method="POST" class="d-grid p-0 m-0">
-                            <input type="hidden" name="selected_task" value="{{ task.id }}">
-                            <input type="hidden" name="duration" value="60">
-                            <button type="submit" class="btn btn-dark btn-option">
+                        {% if force_break %}
+                            <!-- FORCED BREAK OPTIONS -->
+                            
+                            <!-- 1. Active Recharge (Promoted) -->
+                            <a href="{{ url_for('timer', name='Active Recharge', minutes=15, xp=50) }}" class="btn btn-warning btn-option fw-bold">
                                 <div class="d-flex w-100 justify-content-between align-items-center">
                                     <div>
-                                        <i class="fas fa-brain text-primary me-2"></i> Dive Deeper
+                                        <i class="fas fa-running me-2"></i> Active Recharge
+                                        <div class="small text-dark opacity-75 mt-1">Walk, stretch, or hydrate.</div>
                                     </div>
-                                    <span class="badge bg-primary">1 Hour</span>
+                                    <span class="badge bg-dark text-warning">+50 XP</span>
                                 </div>
-                            </button>
-                        </form>
+                            </a>
 
-                        <!-- Option 3: Task Complete -->
-                        <a href="{{ url_for('task_finish', task_id=task.id) }}" class="btn btn-dark btn-option" style="border-color: #198754;">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                <div>
-                                    <i class="fas fa-flag-checkered text-success me-2"></i> Task Finished
+                            <!-- 2. Task Complete (Still allowed if you are actually done) -->
+                            <a href="{{ url_for('task_finish', task_id=task.id) }}" class="btn btn-outline-success btn-option mt-3">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-flag-checkered me-2"></i> Task Finished
+                                    </div>
+                                    <span class="badge bg-success text-white">+{{ task.xp_award }} XP</span>
                                 </div>
-                                <span class="badge bg-warning text-dark">+{{ task.xp_award }} XP</span>
-                            </div>
-                        </a>
+                            </a>
+
+                        {% else %}
+                            <!-- STANDARD OPTIONS -->
+                            
+                            <!-- Option 1: Rest -->
+                            <a href="{{ url_for('timer', name='Rest Cycle', minutes=5, xp=0) }}" class="btn btn-dark btn-option">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-mug-hot text-info me-2"></i> Take a Breather
+                                    </div>
+                                    <span class="badge bg-secondary">5 min</span>
+                                </div>
+                            </a>
+
+                            <!-- Option 2: Deep Cycle (1 Hour) -->
+                            <form action="{{ url_for('timer') }}" method="POST" class="d-grid p-0 m-0">
+                                <input type="hidden" name="selected_task" value="{{ task.id }}">
+                                <input type="hidden" name="duration" value="60">
+                                <button type="submit" class="btn btn-dark btn-option">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-brain text-primary me-2"></i> Dive Deeper
+                                        </div>
+                                        <span class="badge bg-primary">1 Hour</span>
+                                    </div>
+                                </button>
+                            </form>
+
+                            <!-- Option 3: Task Complete -->
+                            <a href="{{ url_for('task_finish', task_id=task.id) }}" class="btn btn-dark btn-option" style="border-color: #198754;">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-flag-checkered text-success me-2"></i> Task Finished
+                                    </div>
+                                    <span class="badge bg-warning text-dark">+{{ task.xp_award }} XP</span>
+                                </div>
+                            </a>
+                        {% endif %}
 
                         <hr class="border-secondary my-2">
 

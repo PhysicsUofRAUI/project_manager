@@ -219,7 +219,12 @@ def timer():
         task_id = request.form.get('selected_task')
         if task_id:
             task = Task.query.get(task_id)
-            # Standard duration remains 30
+            # Check if a custom duration was passed (e.g., from cycle_complete 1hr button)
+            if request.form.get('duration'):
+                try:
+                    duration = int(request.form.get('duration'))
+                except ValueError:
+                    duration = 30
             
     # Safety fallback
     if not task:
