@@ -235,7 +235,7 @@ def timer():
     new_cycle = Cycle(
         task_id=task.id,
         datetime=datetime.now(),
-        deep_cycle=(duration >= 30)
+        deep_cycle=(duration > 30)
     )
     db.session.add(new_cycle)
     db.session.commit()
